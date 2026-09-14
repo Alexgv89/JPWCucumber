@@ -1,0 +1,53 @@
+# ==========================================
+# MAVEN / GRADLE BUILD ARTIFACTS
+# ==========================================
+target/
+build/
+.gradle/
+*.class
+
+# ==========================================
+# ALLURE REPORTS & RESULTS
+# ==========================================
+allure-results/
+allure-report/
+
+# ==========================================
+# EVIDENCIAS: VIDEOS Y CAPTURAS DE PANTALLA
+# ==========================================
+target/videos/
+build/videos/
+screenshots/
+target/screenshots/
+build/screenshots/
+*.png
+*.jpg
+*.jpeg
+*.webm
+
+# ==========================================
+# IDEs (IntelliJ IDEA, Eclipse, VS Code)
+# ==========================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+
+# ==========================================
+# SISTEMA OPERATIVO
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ==========================================
+# CONFIGURACIONES LOCALES / SENSIBLES (Opcional)
+# ==========================================
+# config.properties
