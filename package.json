@@ -1,0 +1,31 @@
+{
+  "name": "jpwcucumber-playwright",
+  "version": "1.0.0",
+  "scripts": {
+    "clear:all": "npx rimraf target allure-results allure-report allure-history screenshots videos build",
+    "clear:evidences": "npx rimraf screenshots videos target/videos",
+    "clear:results": "npx rimraf target/allure-results allure-report",
+    "clear:history": "npx rimraf allure-history",
+    "report:open": "npx allure open allure-report --port 8082",
+    "test": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test || true) && npm run report:open",
+    "test:chrome": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome || true) && npm run report:open",
+    "test:firefox": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=firefox || true) && npm run report:open",
+    "test:edge": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=edge || true) && npm run report:open",
+    "test:safari": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=safari || true) && npm run report:open",
+    "test:headless": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dheadless=true || true) && npm run report:open",
+    "test:video": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Drecord.video=true || true) && npm run report:open",
+    "test:cross-browser": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome || true) && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=firefox || true) && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=safari || true) && npm run report:open",
+    "test:cross-browser:all": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome || true) && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=firefox || true) && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=edge || true) && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=safari || true) && npm run report:open",
+    "test:cross-browser:headless": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome -Dheadless=true || true) && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=firefox -Dheadless=true || true) && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=safari || true) && npm run report:open",
+    "test:ci": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome -Dheadless=true",
+    "test:ci:chrome": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome -Dheadless=true",
+    "test:ci:firefox": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=firefox -Dheadless=true",
+    "test:ci:edge": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=edge -Dheadless=true",
+    "test:ci:safari": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=safari",
+    "test:ci:cross-browser": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome -Dheadless=true || true) && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=firefox -Dheadless=true || true) && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=safari || true)"
+  },
+  "devDependencies": {
+    "allure": "^3.17.0",
+    "rimraf": "^6.0.1"
+  }
+}
