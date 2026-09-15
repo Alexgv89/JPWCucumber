@@ -22,6 +22,7 @@ public class Hooks {
     private static final ThreadLocal<BrowserContext> contextThread = new ThreadLocal<>();
     private static final ThreadLocal<Page> pageThread = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> recordVideoThread = new ThreadLocal<>();
+    private static final ThreadLocal<String> currentBrowserThread = new ThreadLocal<>();
 
     private static Properties properties;
     
@@ -59,13 +60,22 @@ public class Hooks {
             browserName = System.getProperty("browser", properties.getProperty("browser", "chromium")).toLowerCase();
         }
         
-        // Normalización de motor Safari a WebKit
+        // Guardamos el nombre limpio original para el reporte antes de normalizar
+        String displayBrowserName = browserName.toUpperCase();
+
+        // Normalización de motor Safari a WebKit para Playwright
         if (browserName.equals("safari")) {
             browserName = "webkit";
+            displayBrowserName = "SAFARI";
         }
         
+        currentBrowserThread.set(displayBrowserName);
+        
         // Registramos el navegador activo en la lista segura para Allure
-        executedBrowsers.add(browserName);
+        executedBrowsers.add(displayBrowserName);
+
+        // Inyectamos formalmente el navegador como parámetro oficial en Allure para este escenario
+        io.qameta.allure.Allure.parameter("Browser", displayBrowserName);
 
         boolean headless = Boolean.parseBoolean(System.getProperty("headless", properties.getProperty("headless", "false")));
         String channel = System.getProperty("channel", properties.getProperty("channel"));
@@ -132,7 +142,10 @@ public class Hooks {
             scenario.attach(screenshot, "image/png", "screenshot-" + scenarioName);
         }
 
-        // 6. Cierre ordenado de los recursos y limpieza de ThreadLocal para evitar fugas de memoria
+        // 6. Generación segura del entorno para Allure ANTES de limpiar los hilos
+        generateAllureEnvironment();
+
+        // 7. Cierre ordenado de los recursos y limpieza de ThreadLocal para evitar fugas de memoria
         if (page != null) { page.close(); pageThread.remove(); }
         if (context != null) { context.close(); contextThread.remove(); }
         if (browser != null) { browser.close(); browserThread.remove(); }
@@ -141,15 +154,17 @@ public class Hooks {
         if (recordVideoThread.get() != null) {
             recordVideoThread.remove();
         }
-
-        // 7. Generación segura del entorno para Allure
-        generateAllureEnvironment();
+        if (currentBrowserThread.get() != null) {
+            currentBrowserThread.remove();
+        }
     }
 
-    // Método sincronizado para evitar condiciones de carrera en ejecuciones paralelas
+    // Método sincronizado para evitar condiciones de carrera y apuntar a la carpeta aislada correcta
     private synchronized void generateAllureEnvironment() {
         try {
-            Path allureResultsDir = Paths.get("target/allure-results");
+            // Lee el directorio específico inyectado por Maven (-Dallure.results.directory=...) o usa el predeterminado
+            String resultsDirStr = System.getProperty("allure.results.directory", "target/allure-results");
+            Path allureResultsDir = Paths.get(resultsDirStr);
             Files.createDirectories(allureResultsDir);
             
             Properties envProps = new Properties();
@@ -160,12 +175,13 @@ public class Hooks {
             envProps.setProperty("Executed.By", properties.getProperty("Executed.By", "Señor"));
             envProps.setProperty("Release.Version", properties.getProperty("Release.Version", "1.0"));
 
-            // Datos dinámicos ejecución actual
+            // Datos dinámicos de la ejecución actual con mapeo limpio (ej: SAFARI en vez de webkit)
+            String activeBrowser = currentBrowserThread.get() != null ? currentBrowserThread.get() : System.getProperty("browser", "CHROME");
+            envProps.setProperty("Browser", activeBrowser);
             envProps.setProperty("Browsers.Used", String.join(", ", executedBrowsers));
             envProps.setProperty("Headless", System.getProperty("headless", properties.getProperty("headless", "false")));
             envProps.setProperty("OS.Name", System.getProperty("os.name"));
             envProps.setProperty("Java.Version", System.getProperty("java.version"));
-            
 
             try (FileOutputStream fos = new FileOutputStream(allureResultsDir.resolve("environment.properties").toFile())) {
                 envProps.store(fos, "Allure Environment Properties");
