@@ -1,63 +1,118 @@
 const fs = require('fs');
 const path = require('path');
 
-const resultsDir = 'target/allure-results';
-const outputFile = 'target/allure-results/quality-gate.json';
+const resultsRoot = process.env.ALLURE_RESULTS_DIRECTORY || 'target/allure-results';
+const baseDir = 'target';
+const qualityGateFile = path.join(resultsRoot, 'quality-gate.json');
+const metricsFile = path.join(resultsRoot, 'metrics.json');
+const envPropsFile = path.join(resultsRoot, 'environment.properties');
 
 try {
-    if (!fs.existsSync(resultsDir)) {
-        console.error(`Results directory ${resultsDir} does not exist.`);
-        process.exit(0); // Don't fail the whole build if no results
+    if (!fs.existsSync(baseDir)) {
+        console.error(`Base directory ${baseDir} does not exist.`);
+        process.exit(0);
     }
 
-    const files = fs.readdirSync(resultsDir);
-    const resultFiles = files.filter(f => f.endsWith('-result.json'));
+    const resultsDir = fs.existsSync(resultsRoot) ? resultsRoot : path.join(baseDir, 'allure-results');
+    if (!fs.existsSync(resultsDir)) {
+        console.error(`Results directory ${resultsDir} not found.`);
+        process.exit(0);
+    }
 
-    let passed = 0;
-    let total = resultFiles.length;
+    const allFiles = fs.readdirSync(resultsDir);
+    const envFragments = allFiles.filter(f => f.startsWith('env-') && f.endsWith('.properties'));
+    const resultFiles = allFiles.filter(f => f.endsWith('-result.json'));
+
+    let usedBrowsers = new Set();
+    let consolidatedEnv = {};
+
+    envFragments.forEach(file => {
+        const filePath = path.join(resultsDir, file);
+        const content = fs.readFileSync(filePath, 'utf8');
+        content.split('\n').forEach(line => {
+            if (line.includes('=')) {
+                const [key, value] = line.split('=');
+                consolidatedEnv[key.trim()] = value.trim();
+            }
+        });
+        const browserName = file.replace('env-', '').replace('.properties', '').toUpperCase();
+        usedBrowsers.add(browserName);
+    });
+
+    resultFiles.forEach(file => {
+        try {
+            const content = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
+            if (content.testCaseId && content.testCaseId.includes('_')) {
+                const browserPart = content.testCaseId.split('_').pop().toUpperCase();
+                const validBrowsers = ['CHROME', 'FIREFOX', 'SAFARI', 'WEBKIT', 'EDGE', 'CHROMIUM'];
+                if (validBrowsers.includes(browserPart)) {
+                    usedBrowsers.add(browserPart);
+                }
+            }
+        } catch (e) {}
+    });
+
+    let passed = 0, failed = 0, broken = 0, skipped = 0;
+    const total = resultFiles.length;
 
     resultFiles.forEach(file => {
         try {
             const content = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
             if (content.status === 'passed') passed++;
-        } catch (e) {
-            console.error(`Error parsing file ${file}:`, e);
-        }
+            else if (content.status === 'failed') failed++;
+            else if (content.status === 'broken') broken++;
+            else if (content.status === 'skipped') skipped++;
+        } catch (e) {}
     });
 
     const successRate = total === 0 ? 0 : passed / total;
-    const failures = total - passed;
 
     const qualityGate = [
         {
             id: "Main Quality Gate",
             success: successRate >= 1.0,
-            actual: successRate,
-            expected: 1.0,
-            rule: "Main Quality Gate/successRate",
+            actual: successRate.toString(),
+            expected: "1.0",
+            rule: "successRate",
             message: `Success rate ${successRate} is ${successRate >= 1.0 ? 'equal or greater' : 'less'} than expected 1.0`
         },
         {
             id: "Main Quality Gate",
-            success: failures <= 0,
-            actual: failures,
-            expected: 0,
-            rule: "Main Quality Gate/maxFailures",
-            message: `The number of failed tests ${failures} ${failures <= 0 ? 'is within' : 'exceeds'} the allowed threshold value 0`
+            success: failed <= 0,
+            actual: failed.toString(),
+            expected: "0",
+            rule: "maxFailures",
+            message: `The number of failed tests ${failed} ${failed <= 0 ? 'is within' : 'exceeds'} the allowed threshold value 0`
         },
         {
             id: "Main Quality Gate",
             success: total >= 1,
-            actual: total,
-            expected: 1,
-            rule: "Main Quality Gate/minTestsCount",
+            actual: total.toString(),
+            expected: "1",
+            rule: "minTestsCount",
             message: `The total number of tests ${total} is ${total >= 1 ? 'greater or equal' : 'less'} than the expected threshold value 1`
         }
     ];
 
-    fs.writeFileSync(outputFile, JSON.stringify(qualityGate, null, 2));
-    console.log(`Quality Gate calculated: ${total} tests, ${passed} passed. Rate: ${successRate}`);
+    const metrics = { total, passed, failed, broken, skipped };
+    const browsersList = Array.from(usedBrowsers).sort().join(', ');
+
+    fs.mkdirSync(path.dirname(qualityGateFile), { recursive: true });
+    fs.writeFileSync(qualityGateFile, JSON.stringify(qualityGate, null, 2));
+    fs.writeFileSync(metricsFile, JSON.stringify(metrics, null, 2));
+
+    let envContent = "";
+    for (const [key, value] of Object.entries(consolidatedEnv)) {
+        envContent += `${key}=${value}\n`;
+    }
+    if (browsersList) {
+        envContent += `Browsers.Used=${browsersList}\n`;
+    }
+
+    fs.writeFileSync(envPropsFile, envContent);
+
+    console.log(`Global Metadata consolidated. Root: ${resultsRoot}, Browsers: ${browsersList}, Total: ${total}, Passed: ${passed}.`);
 } catch (e) {
-    console.error("Error calculating quality gate:", e);
+    console.error("Error in calculate-quality-gate.js:", e);
     process.exit(1);
 }

@@ -1,7 +1,6 @@
 package manager;
 
 import com.microsoft.playwright.*;
-import java.util.Optional;
 
 public class PlaywrightManager {
     private static final ThreadLocal<Playwright> playwrightThread = new ThreadLocal<>();

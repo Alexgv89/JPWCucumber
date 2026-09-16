@@ -199,13 +199,15 @@ public class Hooks {
             String activeBrowser = System.getProperty("browser", "CHROME").toUpperCase();
             envProps.setProperty("Browser", activeBrowser);
             envProps.setProperty("browser.executor", activeBrowser);
-            envProps.setProperty("Browsers.Used", String.join(", ", executedBrowsers));
             envProps.setProperty("Headless", System.getProperty("headless", properties.getProperty("headless", "false")));
             envProps.setProperty("OS.Name", System.getProperty("os.name"));
             envProps.setProperty("Java.Version", System.getProperty("java.version"));
 
-            try (FileOutputStream fos = new FileOutputStream(allureResultsDir.resolve("environment.properties").toFile())) {
-                envProps.store(fos, "Allure Environment Properties");
+            // IMPORTANTE: Escribir en un archivo específico del navegador para evitar que se sobreescriban entre sí
+            // El script calculate-quality-gate.js se encargará de consolidar estos fragmentos al final.
+            String fileName = "env-" + activeBrowser.toLowerCase() + ".properties";
+            try (FileOutputStream fos = new FileOutputStream(allureResultsDir.resolve(fileName).toFile())) {
+                envProps.store(fos, "Allure Environment Fragment");
             }
         } catch (IOException e) {
             e.printStackTrace();
