@@ -58,7 +58,7 @@ jobs:
         if: github.event.inputs.clean_history == 'true'
         run: |
           npm run clear:results
-          npm run clear:history
+          npm run clear://history
 
       - name: Restore Allure history
         if: github.event.inputs.clean_history != 'true'
@@ -79,16 +79,35 @@ jobs:
             npm run test:ci:browser
           fi
 
+      - name: Debug results directory
+        if: always()
+        run: |
+          echo "Listing results directory:"
+          ls -R target/allure-results || echo "Directory not found"
+
       - name: Generate Allure Report
         if: always()
-        continue-on-error: true
-        run: npx allure generate target/allure-results -c allurerc.js --clean -o allure-report
+        continue-on-//error: true
+        run: |
+          if [ -d "target/allure-results" ] && [ "$(ls -A target/allure-results)" ]; then
+            npx allure generate target/allure-results -c allurerc.js --clean -o allure-report
+          else
+            echo "No results found to generate report. Creating dummy report to avoid 404."
+            mkdir -p target/allure-results
+            echo '{"uuid":"dummy","status":"broken","statusDetails":{"message":"No tests were executed"}}' > target/allure-results/dummy-result.json
+            npx allure generate target/allure-results -c allurerc.js --clean -o allure-report
+          fi
 
       - name: Prepare Reports for Pages
         if: always()
         run: |
           mkdir -p public/allure
-          cp -r allure-report/* public/allure/ || true
+          if [ -d "allure-report" ]; then
+            cp -r allure-report/* public/allure/ || true
+          else
+            mkdir -p public/allure
+            echo "Report generation failed" > public/allure/index.html
+          fi
 
           cat > public/index.html << 'EOF'
           <!DOCTYPE html>
