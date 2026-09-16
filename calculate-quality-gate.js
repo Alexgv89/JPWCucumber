@@ -9,19 +9,33 @@ const envPropsFile = path.join(resultsRoot, 'environment.properties');
 
 try {
     if (!fs.existsSync(baseDir)) {
-        console.error(`Base directory ${baseDir} does not exist.`);
-        process.exit(0);
+        fs.mkdirSync(baseDir, { recursive: true });
     }
 
-    const resultsDir = fs.existsSync(resultsRoot) ? resultsRoot : path.join(baseDir, 'allure-results');
-    if (!fs.existsSync(resultsDir)) {
-        console.error(`Results directory ${resultsDir} not found.`);
-        process.exit(0);
+    if (!fs.existsSync(resultsRoot)) {
+        fs.mkdirSync(resultsRoot, { recursive: true });
     }
 
-    const allFiles = fs.readdirSync(resultsDir);
+    const resultsDir = resultsRoot;
+
+
+    const allFiles = fs.readdirSync(resultsRoot);
     const envFragments = allFiles.filter(f => f.startsWith('env-') && f.endsWith('.properties'));
     const resultFiles = allFiles.filter(f => f.endsWith('-result.json'));
+
+    if (resultFiles.length === 0) {
+        const dummyResult = {
+            uuid: 'dummy-uuid',
+            status: 'broken',
+            start: Date.now(),
+            stop: Date.now(),
+            testCaseId: 'dummy-test',
+            labels: [{ name: 'framework', value: 'Cucumber' }],
+            statusDetails: { message: 'No tests were executed or found.' }
+        };
+        fs.writeFileSync(path.join(resultsRoot, 'dummy-result.json'), JSON.stringify(dummyResult, null, 2));
+        console.log('No results found. Created a dummy result to allow report generation.');
+    }
 
     let usedBrowsers = new Set();
     let consolidatedEnv = {};
