@@ -7,6 +7,14 @@ on:
     branches: [ main ]
   workflow_dispatch:
     inputs:
+      execution_mode:
+        description: 'Modo de ejecución'
+        required: true
+        type: choice
+        options:
+          - cross-browser
+          - single-browser
+        default: 'single-browser'
       clean_history:
         description: 'Borrar historial y empezar de cero'
         required: false
