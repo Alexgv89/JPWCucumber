@@ -1,0 +1,187 @@
+name: Wikipedia Automation Suite CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      clean_history:
+        description: 'Borrar historial y empezar de cero'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  test-and-report:
+    runs-on: ubuntu-latest
+    outputs:
+      has_allure_history: ${{ steps.check-history.outputs.exists }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Clean history (solo al empezar de cero)
+        if: github.event.inputs.clean_history == 'true'
+        run: |
+          npm run clear:results
+          npm run clear:history
+
+      - name: Restore Allure history
+        if: github.event.inputs.clean_history != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: allure-history
+          key: allure-history-${{ github.ref }}-
+          restore-keys: |
+            allure-history-
+
+      - name: Run Cross-Browser Tests
+        run: npm run test:ci:cross
+
+      - name: Generate Allure Report
+        if: always()
+        run: npx allure generate target/allure-results --config allurerc.js --clean -o allure-report
+
+      - name: Prepare Reports for Pages
+        if: always()
+        run: |
+          mkdir -p public/allure
+          cp -r allure-report/* public/allure/ || true
+
+          cat > public/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="es">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Reportes de Pruebas - Wikipedia Suite</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+              }
+              .container {
+                background: white;
+                border-radius: 20px;
+                padding: 50px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 600px;
+                width: 100%;
+              }
+              h1 {
+                color: #333;
+                margin-bottom: 10px;
+                font-size: 2.5em;
+                text-align: center;
+              }
+              .subtitle {
+                color: #666;
+                text-align: center;
+                margin-bottom: 40px;
+                font-size: 1.1em;
+              }
+              .reports {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+              }
+              .report-card {
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                border-radius: 15px;
+                padding: 30px;
+                text-decoration: none;
+                color: white;
+                transition: transform 0.3s, box-shadow 0.3s;
+                display: block;
+                text-align: center;
+              }
+              .report-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+              }
+              .report-card h2 {
+                font-size: 1.8em;
+                margin-bottom: 10px;
+              }
+              .report-card p {
+                opacity: 0.9;
+                font-size: 1em;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>🚀 Reportes de Pruebas</h1>
+              <p class="subtitle">Wikipedia Automation Suite - Selección de Reportes</p>
+              <div class="reports">
+                <a href="./allure/index.html" class="report-card">
+                  <h2>📊 Reporte Allure</h2>
+                  <p>Reporte detallado con capturas, videos, categorías y timeline</p>
+                </a>
+              </div>
+            </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Check Allure history exists
+        id: check-history
+        if: always()
+        run: echo "exists=$([ -f allure-history/history.jsonl ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Upload Allure history
+        if: always() && steps.check-history.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-history
+          path: allure-history
+
+      - name: Upload Pages Artifact
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: test-and-report
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,42 @@
+name: Clear Allure History
+
+on:
+  workflow_dispatch: # Botón manual para ejecutar la limpieza
+
+permissions:
+  contents: read
+  actions: write # Necesario para interactuar con los caches
+
+jobs:
+  clear-cache-and-history:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Clear Local Folders
+        run: |
+          npm run clear:results
+          npm run clear:history
+          mkdir -p allure-history # Creamos la carpeta vacía para evitar errores de subida
+
+      - name: Upload Empty History Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-history-artifact
+          path: allure-history
+
+      - name: Overwrite Cache with Empty History
+        uses: actions/cache/save@v4
+        with:
+          path: allure-history
+          # Generamos una llave única para que este sea el nuevo "punto de partida"
+          key: allure-history-${{ github.ref }}-${{ github.run_id }}
+
+      - name: Summary
+        run: |
+          echo "## 🗑️ Limpieza Completada" >> $GITHUB_STEP_SUMMARY
+          echo "Se han ejecutado los comandos de limpieza y se ha reseteado el caché del historial para la rama ${{ github.ref_name }}." >> $GITHUB_STEP_SUMMARY
