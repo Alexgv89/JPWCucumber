@@ -139,23 +139,22 @@ public class Hooks {
             try {
                 AllureLifecycle lifecycle = Allure.getLifecycle();
                 lifecycle.updateTestCase(test -> {
+                    // 1. Fix TestCaseId for cross-browser uniqueness
                     String originalId = test.getTestCaseId();
                     if (originalId != null && !originalId.contains("_")) {
                         test.setTestCaseId(originalId + "_" + this.displayBrowserName.toLowerCase());
                     }
+
+                    // 2. Inyección forzada de etiquetas en el objeto TestCase (para asegurar persistencia en JSON)
+                    test.getLabels().add(new Label().setName("environment").setValue(this.envName.toLowerCase()));
+                    test.getLabels().add(new Label().setName("browser").setValue(this.displayBrowserName.toLowerCase()));
+                    test.getLabels().add(new Label().setName("executor").setValue(this.executorName.toLowerCase()));
                 });
 
-                // Inyección de metadatos
-                Allure.label("environment", this.envName.toLowerCase());
-                Allure.label("browser", this.displayBrowserName.toLowerCase());
-                Allure.label("executor", this.executorName.toLowerCase());
-                Allure.label("thread", String.format("%s (ID: %d)", Thread.currentThread().getName(), Thread.currentThread().getId()));
-
+                // Inyección de parámetros (estos suelen persistirse mejor vía Allure.parameter)
                 Allure.parameter("Environment", this.envName);
-                Allure.parameter("Base URL", PlaywrightManager.getBaseUrl());
                 Allure.parameter("Browser", this.displayBrowserName);
                 Allure.parameter("browser.executor", this.executorName);
-                Allure.parameter("Headless", String.valueOf(this.headless));
 
                 updateAttempts.set(Integer.MAX_VALUE);
             } catch (Exception e) {

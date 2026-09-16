@@ -14,9 +14,9 @@
     "test:regression": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Dcucumber.filter.tags=\"@regression\" && npm run report:open",
     "test:video": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Drecord.video=true && npm run report:open",
     "test:headless": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Dheadless=true && npm run report:open",
-    "test:browser": "npm run clear:results && mvn test -Dbrowser=${BROWSER:-chrome} -Dheadless=${HEADLESS:-false} && npm run merge:results && npm run report:generate && npm run report:open",
-    "test:browser:headless": "npm run clear:results && mvn test -Dbrowser=${BROWSER:-chrome} -Dheadless=true && npm run merge:results && npm run report:generate && npm run report:open",
-    "test:tag": "npm run clear:results && mvn test -Dcucumber.filter.tags=${TAG} && npm run merge:results && npm run report:generate && npm run report:open",
+    "test:browser": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Dbrowser=${BROWSER:-chrome} -Dheadless=${HEADLESS:-false} && npm run report:open",
+    "test:browser:headless": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Dbrowser=${BROWSER:-chrome} -Dheadless=true && npm run report:open",
+    "test:tag": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Dcucumber.filter.tags=${TAG} && npm run report:open",
     "test:cross-browser": "npm run clear:results && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dbrowser=chrome -Dallure.results.dir=allure-results-chrome || true) && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dbrowser=firefox -Dallure.results.dir=allure-results-firefox || true) && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dbrowser=safari -Dallure.results.dir=allure-results-safari || true) && npm run merge:results && npm run report:generate && npm run report:open",
     "test:cross-browser:headless": "npm run clear:results && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dheadless=true -Dbrowser=chrome -Dallure.results.dir=allure-results-chrome || true) && (mvn test -Dcucumber.//_filter.tags=\"@cross-browser\" -Dheadless=true -Dbrowser=firefox -Dallure.results.dir=allure-results-firefox || true) && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dheadless=true -Dbrowser=safari -Dallure.results.dir=allure-results-safari || true) && npm run merge:results && npm run report:generate && npm run report:open"
   },

@@ -35,47 +35,32 @@ module.exports = {
     ],
   },
   environments: {
-    // 1. Vista Global (Inicia aquí para que el Quality Gate sea visible)
-    default: {
-      name: "Todo",
-      matcher: () => true,
-    },
-    // 2. Fallback: Captura cualquier ambiente que no esté definido abajo
-    fallback: {
-      name: "Default",
-      matcher: ({ labels = [], parameters = [] }) => {
-        const hasKnownEnv = [...labels, ...parameters].some(item =>
-          item && item.value && knownEnvs.some(env => item.value.toLowerCase().includes(env))
-        );
-        return !hasKnownEnv;
-      },
-    },
     dev: {
       name: "Development",
       matcher: ({ labels = [], parameters = [] }) =>
-        labels.some((l) => l && l.value && l.value.toLowerCase().includes("dev")) ||
-        parameters.some((p) => p && p.value && p.value.toLowerCase().includes("dev")),
+        labels.some((l) => l && (l.value || l).toString().toLowerCase().includes("dev")) ||
+        parameters.some((p) => p && (p.value || p).toString().toLowerCase().includes("dev")),
     },
     qa: {
       name: "QA Environment",
       matcher: ({ labels = [], parameters = [] }) =>
-        labels.some((l) => l && l.value && l.value.toLowerCase().includes("qa")) ||
-        parameters.some((p) => p && p.value && p.value.toLowerCase().includes("qa")),
+        labels.some((l) => l && (l.value || l).toString().toLowerCase().includes("qa")) ||
+        parameters.some((p) => p && (p.value || p).toString().toLowerCase().includes("qa")),
     },
     staging: {
       name: "Staging",
       matcher: ({ labels = [], parameters = [] }) =>
-        labels.some((l) => l && l.value && (l.value.toLowerCase().includes("staging") || l.value.toLowerCase().includes("sta"))) ||
-        parameters.some((p) => p && p.value && (p.value.toLowerCase().includes("staging") || p.value.toLowerCase().includes("sta"))),
+        labels.some((l) => l && (l.value || l).toString().toLowerCase().includes("staging") || (l.value || l).toString().toLowerCase().includes("sta")) ||
+        parameters.some((p) => p && (p.value || p).toString().toLowerCase().includes("staging") || (p.value || p).toString().toLowerCase().includes("sta")),
     },
     prod: {
       name: "Production",
       matcher: ({ labels = [], parameters = [] }) =>
         labels.some(
-          (l) => l && l.value && (l.value.toLowerCase().includes("prod") || l.value.toLowerCase().includes("production"))
+          (l) => l && (l.value || l).toString().toLowerCase().includes("prod") || (l.value || l).toString().toLowerCase().includes("production")
         ) ||
         parameters.some(
-          (p) => p && p.value && (p.value.toLowerCase().includes("prod") || p.value.toLowerCase().includes("production"))
+          (p) => p && (p.value || p).toString().toLowerCase().includes("prod") || (p.value || p).toString().toLowerCase().includes("production")
         ),
     },
   },
