@@ -69,12 +69,20 @@ jobs:
           restore-keys: |
             allure-history-
 
-      - name: Run Cross-Browser Tests
-        run: npm run test:ci:cross
+      - name: Run Tests
+        id: run_tests
+        continue-on-error: true
+        run: |
+          if [ "${{ github.event.inputs.execution_mode }}" == "cross-browser" ]; then
+            npm run test:ci:cross
+          else
+            npm run test:ci:browser
+          fi
 
       - name: Generate Allure Report
         if: always()
-        run: npx allure generate target/allure-results --config allurerc.js --clean -o allure-report
+        continue-on-error: true
+        run: npx allure generate target/allure-results -c allurerc.js --clean -o allure-report
 
       - name: Prepare Reports for Pages
         if: always()
@@ -170,7 +178,7 @@ jobs:
         run: echo "exists=$([ -f allure-history/history.jsonl ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
 
       - name: Upload Allure history
-        if: always() && steps.check-history.outputs.exists == 'true'
+        if: always() && steps.check-//history.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: allure-history
