@@ -6,32 +6,23 @@
     "clear:evidences": "npx rimraf screenshots videos target/videos",
     "clear:results": "npx rimraf target/allure-results target/allure-results-chrome target/allure-results-firefox target/allure-results-edge target/allure-results-safari allure-report",
     "clear:history": "npx rimraf allure-history",
+    "report:generate": "node calculate-quality-gate.js && npx allure generate target/allure-results --config allurerc.js --output allure-report && cp target/allure-results/quality-gate.json allure-report/quality-gate.json",
     "report:open": "npx allure open allure-report --port 8082",
-    "report:generate": "npx allure generate --config allurerc.json --output allure-report",
-    
-    "test": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test || true) && npm run report:open",
-    "test:chrome": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome || true) && npm run report:open",
-    "test:firefox": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=firefox || true) && npm run report:open",
-    "test:edge": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=edge || true) && npm run report:open",
-    "test:safari": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=safari || true) && npm run report:open",
-    "test:headless": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dheadless=true || true) && npm run report:open",
-    "test:video": "npm run clear:results && (npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Drecord.video=true || true) && npm run report:open",
-    
-    "merge:results": "mkdir -p target/allure-results && b_list=\"\"; for b in chrome firefox edge safari; do dir=\"target/allure-results-$b\"; if [ -d \"$dir\" ] && [ \"$(ls -A $dir 2>/dev/null)\" ]; then cp \"$dir\"/* target/allure-results/ 2>/dev/null || true; b_list=\"$b_list $(echo $b | tr '[:lower:]' '[:upper:]')\"; fi; done; b_clean=$(echo $b_list | xargs | tr ' ' ','); printf \"Environment=QA\\nProject=Automation\\nExecuted.By=Señor\\nRelease.Version=1.0\\nBrowsers.Used=%s\\n\" \"$b_clean\" > target/allure-results/environment.properties",
-    
-    "test:cross-browser": "npm run clear:results && (mvn test -Dbrowser=chrome -Dallure.results.directory=target/allure-results-chrome || true) && (mvn test -Dbrowser=firefox -Dallure.results.directory=target/allure-results-firefox || true) && (mvn test -Dbrowser=safari -Dallure.results.directory=target/allure-results-safari || true) && npm run merge:results && npm run report:generate && npm run report:open",
-    "test:cross-browser:all": "npm run clear:results && (mvn test -Dbrowser=chrome -Dallure.results.directory=target/allure-results-chrome || true) && (mvn test -Dbrowser=firefox -Dallure.results.directory=target/allure-results-firefox || true) && (mvn test -Dbrowser=edge -Dallure.results.directory=target/allure-results-edge || true) && (mvn test -Dbrowser=safari -Dallure.results.directory=target/allure-results-safari || true) && npm run merge:results && npm run report:generate && npm run report:open",
-    "test:cross-browser:headless": "npm run clear:results && (mvn test -Dbrowser=chrome -Dheadless=true -Dallure.results.directory=target/allure-results-chrome || true) && (mvn test -Dbrowser=firefox -Dheadless=true -Dallure.results.directory=target/allure-results-firefox || true) && (mvn test -Dbrowser=safari -Dallure.results.directory=target/allure-results-safari || true) && npm run merge:results && npm run report:generate && npm run report:open",
-    
-    "test:ci": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome -Dheadless=true",
-    "test:ci:chrome": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=chrome -Dheadless=true",
-    "test:ci:firefox": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=firefox -Dheadless=true",
-    "test:ci:edge": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=edge -Dheadless=true",
-    "test:ci:safari": "npm run clear:results && npx allure run --config allurerc.json --results-dir target/allure-results -o allure-report -- mvn test -Dbrowser=safari",
-    "test:ci:cross-browser": "npm run clear:results && (mvn test -Dbrowser=chrome -Dheadless=true -Dallure.results.directory=target/allure-results-chrome || true) && (mvn test -Dbrowser=firefox -Dheadless=true -Dallure.results.directory=target/allure-results-firefox || true) && (mvn test -Dbrowser=safari -Dallure.results.directory=target/allure-results-safari || true) && npm run merge:results && npm run report:generate"
+    "merge:results": "mkdir -p target/allure-results && b_list=\"\"; for b in chrome firefox edge safari; do dir=\"target/allure-results-$b\"; if [ -d \"$dir\" ] && [ \"$(ls -A $dir 2>/dev/null)\" ]; then cp \"$dir\"/* target/allure-results/ 2>/dev/null || true; b_list=\"$b_list $(echo $b | tr '[:lower:]' '[:upper:]')\"; fi; done; b_clean=$(echo $b_list | xargs | tr ' ' ','); if [ -n \"$b_clean\" ]; then echo \"Browsers.Used=$b_clean\" >> target/allure-results/environment.properties; fi",
+    "test": "npm run clear:results && npx allure run --config allurerc.js -- mvn test && npm run report:open",
+    "test:smoke": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Dcucumber.filter.tags=\"@smoke\" && npm run report:open",
+    "test:regression": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Dcucumber.filter.tags=\"@regression\" && npm run report:open",
+    "test:video": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Drecord.video=true && npm run report:open",
+    "test:headless": "npm run clear:results && npx allure run --config allurerc.js -- mvn test -Dheadless=true && npm run report:open",
+    "test:browser": "npm run clear:results && mvn test -Dbrowser=${BROWSER:-chrome} -Dheadless=${HEADLESS:-false} && npm run merge:results && npm run report:generate && npm run report:open",
+    "test:browser:headless": "npm run clear:results && mvn test -Dbrowser=${BROWSER:-chrome} -Dheadless=true && npm run merge:results && npm run report:generate && npm run report:open",
+    "test:tag": "npm run clear:results && mvn test -Dcucumber.filter.tags=${TAG} && npm run merge:results && npm run report:generate && npm run report:open",
+    "test:cross-browser": "npm run clear:results && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dbrowser=chrome -Dallure.results.dir=allure-results-chrome || true) && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dbrowser=firefox -Dallure.results.dir=allure-results-firefox || true) && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dbrowser=safari -Dallure.results.dir=allure-results-safari || true) && npm run merge:results && npm run report:generate && npm run report:open",
+    "test:cross-browser:headless": "npm run clear:results && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dheadless=true -Dbrowser=chrome -Dallure.results.dir=allure-results-chrome || true) && (mvn test -Dcucumber.//_filter.tags=\"@cross-browser\" -Dheadless=true -Dbrowser=firefox -Dallure.results.dir=allure-results-firefox || true) && (mvn test -Dcucumber.filter.tags=\"@cross-browser\" -Dheadless=true -Dbrowser=safari -Dallure.results.dir=allure-results-safari || true) && npm run merge:results && npm run report:generate && npm run report:open"
   },
   "devDependencies": {
     "allure": "^3.17.0",
+    "copyfiles": "^2.4.1",
     "rimraf": "^6.0.1"
   }
 }

@@ -18,9 +18,7 @@
         <junit.jupiter.version>5.11.0</junit.jupiter.version>
         <slf4j.version>2.0.13</slf4j.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
-
-        <!-- Reintentos automáticos de pruebas fallidas -->
-        <surefire.rerunFailingTestsCount>1</surefire.rerunFailingTestsCount>
+        <allure.results.dir>allure-results</allure.results.dir>
     </properties>
 
     <dependencyManagement>
@@ -142,7 +140,7 @@
                 <configuration>
                     <rerunFailingTestsCount>${surefire.rerunFailingTestsCount}</rerunFailingTestsCount>
                     <systemPropertyVariables>
-                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                        <allure.results.directory>${project.build.directory}/${allure.results.dir}</allure.results.directory>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

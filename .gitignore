@@ -7,13 +7,26 @@ build/
 *.class
 
 # ==========================================
+# NODE / NPM
+# ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+
+# ==========================================
 # ALLURE REPORTS & RESULTS
 # ==========================================
 allure-results/
 allure-report/
+allure-history/
+allure-history-no-config/
+allure-report-no-config/
+allure-results-*/
 
 # ==========================================
-# EVIDENCIAS: VIDEOS Y CAPTURAS DE PANTALLA
+# EVIDENCIAS: VIDEOS Y CAPTURAS de PANTALLA
 # ==========================================
 target/videos/
 build/videos/
@@ -38,7 +51,7 @@ build/screenshots/
 .settings/
 
 # ==========================================
-# SISTEMA OPERATIVO
+# SISTEMA OPERATIVO & LOGS
 # ==========================================
 .DS_Store
 .DS_Store?
@@ -46,6 +59,7 @@ build/screenshots/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+*.log
 
 # ==========================================
 # CONFIGURACIONES LOCALES / SENSIBLES (Opcional)
