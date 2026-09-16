@@ -87,7 +87,7 @@ jobs:
 
       - name: Generate Allure Report
         if: always()
-        continue-on-//error: true
+        continue-on-error: true
         run: |
           if [ -d "target/allure-results" ] && [ "$(ls -A target/allure-results)" ]; then
             npx allure generate target/allure-results -c allurerc.js --clean -o allure-report
