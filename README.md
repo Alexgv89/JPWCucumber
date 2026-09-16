@@ -1,47 +1,70 @@
-# JAVA PLAYWRIGHT + CUCUMBER + ALLURE + JUNIT 5
+# 🚀 Wikipedia Automation Suite (Playwright + Cucumber + Allure)
 
-## 🌐 Scripts de Ejecución y Reportes (Allure)
+Este framework de automatización representa una implementación avanzada de pruebas E2E, diseñada para ser escalable, multiplataforma y totalmente integrable en flujos de CI/CD. Su arquitectura prioriza el aislamiento de hilos, la consolidación de metadatos y la visibilidad de la calidad mediante **Quality Gates**.
 
-El proyecto cuenta con una serie de comandos automatizados diseñados para la ejecución de pruebas multiplataforma, garantizando la separación de resultados por navegador y su posterior consolidación en un reporte unificado de Allure con soporte de **Quality Gates**.
+---
 
-### 📋 Comandos Disponibles
+## 🏗️ Arquitectura Técnica
 
-Puede ejecutar las siguientes tareas directamente desde su terminal utilizando `npm`:
+El framework ha sido diseñado bajo principios de **Clean Architecture**, separando la definición de negocio (Gherkin) de la infraestructura técnica.
 
-#### 🚀 Ejecuciones Rápidas (Con Quality Gates y Allure Run)
-Estos comandos utilizan el wrapper de Allure para una generación de reportes más robusta y el soporte de Puertas de Calidad.
+### 🔹 Pilares de Diseño:
+- **Paralelismo Seguro**: Implementado mediante `ThreadLocal` en el `PlaywrightManager`, asegurando que cada hilo de ejecución tenga su propia instancia de navegador, contexto y página, eliminando cualquier fuga de estado (*state leakage*).
+- **Unicidad en Allure**: Modificación programática del `testCaseId` en los Hooks, permitiendo que un mismo escenario ejecutado en diferentes navegadores se registre como una entrada única, evitando que Allure los interprete como "reintentos".
+- **Consolidación de Metadata (The Fragment Strategy)**: Para evitar que los navegadores sobreescriban el archivo `environment.properties` en ejecuciones paralelas o cross-browser, cada proceso escribe un fragmento (`env-chrome.properties`). Un script de consolidación final (`calculate-//quality-gate.js`) une estos fragmentos en un único archivo maestro.
+- **Puertas de Calidad (Quality Gates)**: Implementación de reglas estrictas (Tasa de éxito 100%, 0 fallos) que se calculan dinámicamente y se visualizan en el Home del reporte, permitiendo una decisión rápida de "Go/No-Go".
 
-| Comando | Descripción | Ejemplo / Nota |
+---
+
+## 🌐 Scripts de Ejecución
+
+Todos los comandos utilizan el wrapper de Allure para garantizar la generación de reportes y la activación de Quality Gates.
+
+### 🚀 Ejecuciones Rápidas (Local)
+| Comando | Descripción | Nota |
 | :--- | :--- | :--- |
-| `npm run test` | Ejecuta la suite completa de pruebas. | `npm run test` |
-| `npm run test:smoke` | Ejecuta solo los escenarios marcados con `@smoke`. | `npm run test:smoke` |
-| `npm run test:regression` | Ejecuta la suite de regresión completa. | `npm run test:regression` |
-| `npm run test:video` | Ejecuta la suite completa grabando video de la sesión. | `npm run test:video` |
-| `npm run test:headless` | Ejecuta la suite completa sin interfaz gráfica (Invisible). | `npm run test:headless` |
+| `npm run test` | Suite completa (Chrome por defecto). | Ideal para desarrollo rápido. |
+| `npm run test:smoke` | Solo escenarios `@smoke`. | Validación rápida de funcionalidades críticas. |
+| `npm run test:regression` | Suite de regresión completa. | Validación exhaustiva antes de despliegue. |
+| `npm run test:headless` | Ejecución invisible. | Mayor velocidad y menor consumo de recursos. |
 
-#### 🛠️ Ejecuciones Dinámicas (Parámetros Personalizados)
-Estos comandos permiten definir el navegador o el tag directamente desde la consola.
+### 🛠️ Ejecuciones Dinámicas (Parámetros)
+| Comando | Uso | Descripción |
+| :--- | :--- | :--- |
+| `npm run test:browser` | `BROWSER=firefox npm run test:browser` | Ejecuta en un navegador específico. |
+| `npm run test:browser:headless` | `BROWSER=safari npm run test:browser:headless` | Ejecuta en un navegador específico modo invisible. |
+| `npm run test:tag` | `TAG=@mi_tag npm run test:tag` | Ejecuta escenarios con el tag indicado. |
 
-| Comando | Uso | Descripción | Ejemplo de ejecución |
-| :--- | :--- | :--- | :--- |
-| `npm run test:browser` | `BROWSER=[nombre] npm run test:browser` | Ejecuta la suite en un navegador específico. | `BROWSER=firefox npm run test:browser` |
-| `npm run test:browser:headless` | `BROWSER=[nombre] npm run test:browser:headless` | Ejecuta en un navegador específico modo headless. | `BROWSER=safari npm run test:browser:headless` |
-| `npm run test:tag` | `TAG=[@tag] npm run test:tag` | Ejecuta solo los escenarios que tengan el tag indicado. | `TAG=@mi_feature npm run test:tag` |
-
-#### 🌐 Ejecuciones Cross-Browser (Consolidación de Resultados)
-Ejecuciones que lanzan múltiples navegadores y unifican los resultados en un solo reporte.
-
+### 🌐 Ejecuciones Cross-Browser
 | Comando | Navegadores | Modo | Descripción |
 | :--- | :--- | :--- | :--- |
-| `npm run test:cross-browser` | Chrome, Firefox, Safari | UI | Ejecución estándar multiplataforma. |
+| `npm run test:cross-browser` | Chrome, Firefox, Safari | UI | Ejecución multiplataforma con interfaz. |
 | `npm run test:cross-browser:headless` | Chrome, Firefox, Safari | Headless | Ejecución multiplataforma invisible. |
 
 ---
 
-### ⚙️ Arquitectura del Flujo de Ejecución
+## ☁️ Integración Continua (CI/CD)
 
-Para mantener los archivos de características (`.feature`) limpios, agnósticos y enfocados puramente en las reglas de negocio, la infraestructura de pruebas se sustenta en los siguientes pilares de diseño:
+El proyecto está totalmente preparado para ejecutarse en servidores de CI (como GitHub Actions) mediante comandos optimizados que generan artefactos estáticos.
 
-1. **Separación de Responsabilidades (Clean Architecture):** Los archivos Gherkin dictan las reglas del negocio, mientras que la infraestructura y los scripts de consola controlan la ejecución física y la infraestructura de los navegadores, evitando mezclar código de pruebas con configuraciones de entorno.
-2. **Escalabilidad y Mantenimiento en CI/CD:** Gracias al aislamiento de resultados en directorios temporales independientes (`target/allure-results-[browser]`), se evitan condiciones de carrera (*race conditions*) y corrupción de datos durante ejecuciones automatizadas y desatendidas.
-3. **Reportes de Calidad Consolidados (Allure):** Mediante la inyección dinámica de metadatos en los ganchos (*hooks*), cada navegador se registra como una entidad de prueba única y separada, permitiendo auditar métricas reales de éxito, tiempos de carga y comportamiento por motor de renderizado sin falsos agrupamientos por reintentos.
+### 📦 Comandos de CI
+- `npm run test:ci:cross`: Ejecuta la suite cross-browser en modo headless y genera la carpeta de reporte final.
+- `npm run test:ci:browser`: Ejecuta un navegador específico en CI y genera el reporte.
+
+### 🚀 Flujo de Despliegue en GitHub Pages
+El pipeline de CI realiza las siguientes acciones:
+1. **Aislamiento**: Ejecuta los tests en un contenedor Linux limpio.
+2. **Consolidación**: Ejecuta `calculate-quality-gate.js` para unificar la metadata de todos los navegadores.
+3. **Landing Page**: Crea un portal de entrada profesional (`index.html`) para acceder fácilmente al reporte de Allure.
+4. **Historial**: Utiliza el sistema de caché de GitHub para mantener la gráfica de tendencias (`history.jsonl`) entre ejecuciones.
+5. **Publicación**: Despliega el resultado final en **GitHub Pages**, permitiendo que cualquier stakeholder vea el reporte en vivo.
+
+---
+
+## 📊 Metadatos del Reporte
+El reporte generado incluye automáticamente la siguiente información consolidada en el Home:
+- **Browsers.Used**: Listado de todos los navegadores que participaron en la ejecución.
+- **Environment**: Ambiente ejecutado (QA, Prod, etc.) resuelto dinámicamente desde `config.properties`.
+- **Base URL**: URL del sistema bajo prueba.
+- **OS / Java**: Información del sistema operativo y versión de Java del servidor de ejecución.
+- **Quality Gates**: Estado de salud del proyecto basado en la tasa de éxito y fallos máximos permitidos.
