@@ -125,6 +125,91 @@ try {
 
     fs.writeFileSync(envPropsFile, envContent);
 
+    // 1. Generate executor.json for Allure Executors widget
+    const isGitHub = process.env.GITHUB_ACTIONS === 'true';
+    const isAzure = process.env.TF_BUILD === 'True' || Boolean(process.env.BUILD_BUILDID);
+    
+    let executorData = {};
+    if (isGitHub) {
+        const repo = process.env.GITHUB_REPOSITORY || '';
+        const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com';
+        const runId = process.env.GITHUB_RUN_ID || '';
+        const runNumber = process.env.GITHUB_RUN_NUMBER ? parseInt(process.env.GITHUB_RUN_NUMBER, 10) : 1;
+        const refName = process.env.GITHUB_REF_NAME || 'main';
+        const [owner, repoName] = repo.split('/');
+        
+        executorData = {
+            name: "GitHub Actions",
+            type: "github",
+            url: repo ? `${serverUrl}/${repo}` : serverUrl,
+            buildOrder: runNumber,
+            buildName: `Run #${runNumber} (${refName})`,
+            buildUrl: runId && repo ? `${serverUrl}/${repo}/actions/runs/${runId}` : undefined,
+            reportUrl: owner && repoName ? `https://${owner}.github.io/${repoName}/` : undefined
+        };
+    } else if (isAzure) {
+        const collectionUri = process.env.SYSTEM_TEAMFOUNDATIONCOLLECTIONURI || '';
+        const project = process.env.SYSTEM_TEAMPROJECT || '';
+        const buildId = process.env.BUILD_BUILDID || '1';
+        const buildNumber = process.env.BUILD_BUILDNUMBER || buildId;
+        const branchName = process.env.BUILD_SOURCEBRANCHNAME || 'main';
+        const projectUrl = `${collectionUri}${project}`;
+        const buildUrl = `${collectionUri}${project}/_build/results?buildId=${buildId}`;
+
+        executorData = {
+            name: "Azure DevOps Pipelines",
+            type: "azure",
+            url: projectUrl || undefined,
+            buildOrder: parseInt(buildId, 10) || 1,
+            buildName: `Build #${buildNumber} (${branchName})`,
+            buildUrl: buildUrl || undefined
+        };
+    } else {
+        const user = process.env.USER || process.env.USERNAME || 'alexgv89';
+        executorData = {
+            name: `Local Execution (${user})`,
+            type: "local",
+            buildOrder: 1,
+            buildName: `Local Run (${new Date().toLocaleDateString()})`,
+            reportUrl: "http://localhost:8082"
+        };
+    }
+
+    const executorFile = path.join(resultsRoot, 'executor.json');
+    fs.writeFileSync(executorFile, JSON.stringify(executorData, null, 2));
+
+    // Also populate executor.json in specific browser result directories if present
+    const browserDirs = ['target/allure-results-chrome', 'target/allure-results-firefox', 'target/allure-results-edge', 'target/allure-results-safari'];
+    browserDirs.forEach(bDir => {
+        if (fs.existsSync(bDir)) {
+            fs.writeFileSync(path.join(bDir, 'executor.json'), JSON.stringify(executorData, null, 2));
+        }
+    });
+
+    // 2. Restore history into target/allure-results/history for Trends widget
+    const historySourceDir = path.join(__dirname, 'allure-history', 'history');
+    const targetHistoryDir = path.join(resultsRoot, 'history');
+
+    if (fs.existsSync(historySourceDir)) {
+        fs.mkdirSync(targetHistoryDir, { recursive: true });
+        const historyFiles = fs.readdirSync(historySourceDir);
+        historyFiles.forEach(file => {
+            fs.copyFileSync(path.join(historySourceDir, file), path.join(targetHistoryDir, file));
+        });
+        console.log(`Copied ${historyFiles.length} history files to ${targetHistoryDir} for Trends`);
+
+        // Also copy history to browser subdirectories if they exist
+        browserDirs.forEach(bDir => {
+            if (fs.existsSync(bDir)) {
+                const bHistoryDir = path.join(bDir, 'history');
+                fs.mkdirSync(bHistoryDir, { recursive: true });
+                historyFiles.forEach(file => {
+                    fs.copyFileSync(path.join(historySourceDir, file), path.join(bHistoryDir, file));
+                });
+            }
+        });
+    }
+
     console.log(`Global Metadata consolidated. Root: ${resultsRoot}, Browsers: ${browsersList}, Total: ${total}, Passed: ${passed}.`);
 } catch (e) {
     console.error("Error in calculate-quality-gate.js:", e);

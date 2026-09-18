@@ -181,7 +181,7 @@ jobs:
       - name: Check Allure history exists
         id: check-history
         if: always()
-        run: echo "exists=$([ -f allure-history/history.jsonl ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+        run: echo "exists=$([ -d allure-history ] && [ -n \"$(ls -A allure-history 2>/dev/null)\" ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
 
       - name: Upload Allure history
         if: always() && steps.check-history.outputs.exists == 'true'
