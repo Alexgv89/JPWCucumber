@@ -14,6 +14,10 @@ parameters:
     values:
       - single-browser
       - cross-browser
+  - name: clean_history
+    displayName: 'Borrar historial y empezar de cero'
+    type: boolean
+    default: false
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -39,8 +43,16 @@ steps:
       npx playwright install --with-deps
     displayName: 'Instalar Dependencias y Navegadores Playwright'
 
-  # 4. Restaurar y Persistir Historial de Allure en Caché de Azure DevOps
+  # 4. Limpieza si se solicita empezar de cero
+  - script: |
+      npm run clear:results
+      npm run clear:history
+    displayName: 'Limpiar Historial de Allure (Empezar de cero)'
+    condition: eq('${{ parameters.clean_history }}', true)
+
+  # 5. Restaurar y Persistir Historial de Allure en Caché de Azure DevOps
   - task: Cache@2
+    condition: eq('${{ parameters.clean_history }}', false)
     inputs:
       key: 'allure-history | "$(Agent.OS)" | "$(Build.SourceBranch)"'
       restoreKeys: |
