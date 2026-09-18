@@ -9,7 +9,9 @@ Este framework de automatización representa una implementación avanzada de pru
 El framework ha sido diseñado bajo principios de **Clean Architecture**, separando la definición de negocio (Gherkin) de la infraestructura técnica.
 
 ### 🔹 Pilares de Diseño:
+- **Pruebas Híbridas (UI + API)**: Soporte nativo para pruebas de interfaz web con **Playwright** y pruebas de servicios backend con **REST Assured** bajo la misma suite de Cucumber.
 - **Paralelismo Seguro**: Implementado mediante `ThreadLocal` en el `PlaywrightManager`, asegurando que cada hilo de ejecución tenga su propia instancia de navegador, contexto y página, eliminando cualquier fuga de estado (*state leakage*).
+- **Aislamiento Inteligente de Recursos (`@api`)**: Cuando un escenario está etiquetado con `@api`, el framework omite automáticamente la inicialización de Playwright/Navegadores, ejecutando las peticiones HTTP puras en milisegundos con cero consumo innecesario de memoria.
 - **Unicidad en Allure**: Modificación programática del `testCaseId` en los Hooks, permitiendo que un mismo escenario ejecutado en diferentes navegadores se registre como una entrada única, evitando que Allure los interprete como "reintentos".
 - **Consolidación de Metadata (The Fragment Strategy)**: Para evitar que los navegadores sobreescriban el archivo `environment.properties` en ejecuciones paralelas o cross-browser, cada proceso escribe un fragmento (`env-chrome.properties`). Un script de consolidación final (`calculate-quality-gate.js`) une estos fragmentos en un único archivo maestro.
 - **Puertas de Calidad (Quality Gates)**: Implementación de reglas estrictas (Tasa de éxito 100%, 0 fallos) que se calculan dinámicamente y se visualizan en el Home del reporte, permitiendo una decisión rápida de "Go/No-Go".
@@ -39,8 +41,44 @@ Todos los comandos utilizan el wrapper de Allure para garantizar la generación 
 ### 🌐 Ejecuciones Cross-Browser
 | Comando | Navegadores | Modo | Descripción |
 | :--- | :--- | :--- | :--- |
-| `npm run test:cross-browser` | Chrome, Firefox, Safari | UI | Ejecución multiplataforma con interfaz. |
-| `npm run test:cross-browser:headless` | Chrome, Firefox, Safari | Headless | Ejecución multiplataforma invisible. |
+| `npm run test:cross-browser:headless` | Chrome, Firefox, Safari + API | Headless | **(Recomendado)** Ejecución completa multiplataforma invisible y rápida. |
+| `npm run test:cross-browser` | Chrome, Firefox, Safari + API | UI | Ejecución multiplataforma con ventanas gráficas. |
+
+> 💡 **¿Headless o con interfaz gráfica?**
+> - **Modo `headless` (Recomendado):** Es significativamente más rápido, ahorra CPU/RAM y no interrumpe tu pantalla abriendo ventanas. Es idéntico a cómo se ejecuta en **GitHub Actions** y **Azure DevOps**.
+> - **Modo gráfico:** Úsalo principalmente cuando estés construyendo o depurando un nuevo test de UI y quieras observar las acciones visualmente.
+
+---
+
+## 🔌 Pruebas de API REST (REST Assured)
+
+El framework incluye integración completa con **REST Assured** y registro visual automático en Allure:
+
+### 🏷️ Uso del Tag `@api`
+Al crear un archivo de características (`.feature`) para servicios REST, se debe añadir el tag `@api` a nivel de Característica o Escenario:
+
+```gherkin
+#language: es
+@api
+Característica: Validación de Servicios REST de Wikipedia
+
+  @smoke @allure.label.story:Consulta_de_Resumen_de_Artículo @allure.label.severity:critical
+  Escenario: Consultar información y resumen de un artículo existente por API
+    Dado que la API REST de Wikipedia está disponible en "https://es.wikipedia.org/api/rest_v1"
+    Cuando realizo una petición GET al endpoint de resumen "/page/summary/Selenium"
+    Entonces la respuesta debe tener el código de estado HTTP 200
+    Y el cuerpo de la respuesta debe contener el título "Selenium"
+    Y el tipo de contenido debe ser "application/json"
+```
+
+> ❓ **¿Qué sucede si NO colocas el tag `@api`?**
+> - **Si colocas `@api`:** [`Hooks.java`](file:///Users/alexgv/Documents/JPWCucumber/src/test/java/hooks/Hooks.java) no inicializa Playwright. El test corre directo por HTTP en milisegundos y en Allure se clasifica limpiamente como `Executor: RestAssured` y `Browser: API`.
+> - **Si NO colocas `@api`:** El test seguirá pasando (REST Assured no depende del navegador), pero Playwright abrirá una ventana de navegador en blanco en segundo plano, gastando tiempo y memoria innecesarios.
+
+### 📑 Adjuntos Automáticos de HTTP en Allure
+Gracias al filtro `AllureRestAssured()` configurado en los steps, el reporte adjunta automáticamente:
+- **HTTP Request:** URL, Headers, Query Params y Payload enviado.
+- **HTTP Response:** Código de estado, Headers recibidos y JSON Body formateado.
 
 ---
 
