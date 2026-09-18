@@ -6,7 +6,11 @@
 @api
 Característica: Validación de Servicios REST de Wikipedia
 
-  @smoke @allure.label.story:Consulta_de_Resumen_de_Artículo @allure.label.severity:critical @allure.issue:API-001 @allure.tms:TC-API-001
+  @smoke 
+  @allure.label.story:Consulta_de_Resumen_de_Artículo
+  @allure.label.severity:critical
+  @allure.issue:API-001
+  @allure.tms:TC-API-001
   Escenario: Consultar información y resumen de un artículo existente por API
     Dado que la API REST de Wikipedia está disponible en "https://es.wikipedia.org/api/rest_v1"
     Cuando realizo una petición GET al endpoint de resumen "/page/summary/Selenium"

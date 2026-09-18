@@ -44,6 +44,7 @@ public class Hooks {
 
     @Before
     public void setUp(Scenario scenario) {
+        updateAttempts.set(0);
         // 1. Obtención y normalización del ambiente real de ejecución
         this.envName = System.getProperty("environment", properties.getProperty("Environment", "QA")).toUpperCase();
 
@@ -142,7 +143,7 @@ public class Hooks {
     @io.cucumber.java.BeforeStep
     public void beforeStep() {
         int attempts = updateAttempts.get();
-        if (attempts < 3) {
+        if (attempts < 1) {
             try {
                 AllureLifecycle lifecycle = Allure.getLifecycle();
                 lifecycle.updateTestCase(test -> {
@@ -152,20 +153,23 @@ public class Hooks {
                         test.setTestCaseId(originalId + "_" + this.displayBrowserName.toLowerCase());
                     }
 
-                    // 2. Inyección forzada de etiquetas en el objeto TestCase (para asegurar persistencia en JSON)
+                    // 2. Limpieza de etiquetas previas para evitar duplicados en el reporte
+                    test.getLabels().removeIf(l -> l.getName().equals("environment") || l.getName().equals("browser") || l.getName().equals("executor"));
                     test.getLabels().add(new Label().setName("environment").setValue(this.envName.toLowerCase()));
                     test.getLabels().add(new Label().setName("browser").setValue(this.displayBrowserName.toLowerCase()));
                     test.getLabels().add(new Label().setName("executor").setValue(this.executorName.toLowerCase()));
+
+                    // 3. Limpieza y asignación de parámetros sin duplicar
+                    test.getParameters().removeIf(p -> p.getName().equals("Environment") || p.getName().equals("Browser") || p.getName().equals("browser.executor"));
                 });
 
-                // Inyección de parámetros (estos suelen persistirse mejor vía Allure.parameter)
                 Allure.parameter("Environment", this.envName);
                 Allure.parameter("Browser", this.displayBrowserName);
                 Allure.parameter("browser.executor", this.executorName);
 
-                updateAttempts.set(Integer.MAX_VALUE);
+                updateAttempts.set(1);
             } catch (Exception e) {
-                updateAttempts.set(attempts + 1);
+                // Ignore if lifecycle not yet ready
             }
         }
     }
