@@ -25,7 +25,7 @@
     "test:ci:cross": "npm run clear:results && npx allure run --config allurerc.js --output allure-report -- sh -c \"bash run-cross-browser-headless.sh ; node calculate-quality-gate.js\" || true"
   },
   "devDependencies": {
-    "allure": "^3.17.0",
+    "allure": "^3.18.0",
     "copyfiles": "^2.4.1",
     "rimraf": "^6.0.1"
   }
