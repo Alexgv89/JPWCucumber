@@ -190,6 +190,13 @@ jobs:
           name: allure-history
           path: allure-history
 
+      - name: Save Allure history to cache
+        if: always() && steps.check-history.outputs.exists == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: allure-history
+          key: allure-history-${{ github.ref }}-${{ github.run_id }}
+
       - name: Upload Pages Artifact
         if: always()
         uses: actions/upload-pages-artifact@v3
