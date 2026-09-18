@@ -38,7 +38,40 @@ function deduplicateTrendFile(filePath) {
             fs.writeFileSync(filePath, JSON.stringify(deduplicated, null, 2));
         }
     } catch (e) {
-        console.error(`Error deduplicating ${filePath}:`, e);
+        console.error(`Error deduplicating trend file ${filePath}:`, e);
+    }
+}
+
+function deduplicateHistoryJson(filePath) {
+    if (!fs.existsSync(filePath)) return;
+    try {
+        const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        if (content && typeof content === 'object' && !Array.isArray(content)) {
+            for (const key of Object.keys(content)) {
+                const entry = content[key];
+                if (entry && Array.isArray(entry.items)) {
+                    const seen = new Set();
+                    const deduplicatedItems = [];
+                    for (const item of entry.items) {
+                        const timeKey = item.time && item.time.start ? `${item.time.start}_${item.time.stop}` : (item.uid || JSON.stringify(item));
+                        if (!seen.has(timeKey)) {
+                            seen.add(timeKey);
+                            deduplicatedItems.push(item);
+                        }
+                    }
+                    entry.items = deduplicatedItems;
+                    const stat = { failed: 0, broken: 0, skipped: 0, passed: 0, unknown: 0, total: deduplicatedItems.length };
+                    deduplicatedItems.forEach(it => {
+                        if (stat[it.status] !== undefined) stat[it.status]++;
+                        else stat.unknown++;
+                    });
+                    entry.statistic = stat;
+                }
+            }
+            fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
+        }
+    } catch (e) {
+        console.error(`Error deduplicating history.json ${filePath}:`, e);
     }
 }
 
@@ -50,6 +83,8 @@ if (foundSource) {
         fs.copyFileSync(path.join(foundSource, file), destPath);
         if (file.endsWith('-trend.json')) {
             deduplicateTrendFile(destPath);
+        } else if (file === 'history.json') {
+            deduplicateHistoryJson(destPath);
         }
     });
     console.log(`Saved and deduplicated ${files.length} history files from ${foundSource} to ${savedHistoryDir}`);
