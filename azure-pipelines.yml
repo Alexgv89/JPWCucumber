@@ -39,7 +39,16 @@ steps:
       npx playwright install --with-deps
     displayName: 'Instalar Dependencias y Navegadores Playwright'
 
-  # 4. Ejecutar Suite de Pruebas según el modo seleccionado
+  # 4. Restaurar y Persistir Historial de Allure en Caché de Azure DevOps
+  - task: Cache@2
+    inputs:
+      key: 'allure-history | "$(Agent.OS)" | "$(Build.SourceBranch)"'
+      restoreKeys: |
+        allure-history | "$(Agent.OS)"
+      path: 'allure-history'
+    displayName: 'Preservar Historial de Allure en Caché'
+
+  # 5. Ejecutar Suite de Pruebas según el modo seleccionado
   - script: |
       if [ "${{ parameters.execution_mode }}" = "cross-browser" ]; then
         echo "Ejecutando suite Cross-Browser..."
@@ -51,13 +60,13 @@ steps:
     displayName: 'Ejecutar Pruebas Automatizadas'
     continueOnError: true
 
-  # 5. Generar Reporte Estático Autónomo (Single-File)
+  # 6. Generar Reporte Estático Autónomo (Single-File)
   - script: |
       npm run report:single
     displayName: 'Generar Reporte Estático Allure Single-File'
     condition: always()
 
-  # 6. Publicar Resultados JUnit nativos en la pestaña "Tests" de Azure DevOps
+  # 7. Publicar Resultados JUnit nativos en la pestaña "Tests" de Azure DevOps
   - task: PublishTestResults@2
     condition: always()
     inputs:
@@ -67,7 +76,7 @@ steps:
       testRunTitle: 'Resultados de Pruebas Automatizadas - Wikipedia Suite'
     displayName: 'Publicar Métricas de Pruebas en Azure DevOps'
 
-  # 7. Publicar Reporte Allure Estándar como Artefacto
+  # 8. Publicar Reporte Allure Estándar como Artefacto
   - task: PublishPipelineArtifact@1
     condition: always()
     inputs:
@@ -76,7 +85,7 @@ steps:
       publishLocation: 'pipeline'
     displayName: 'Publicar Artefacto Allure Report'
 
-  # 8. Publicar Reporte Autónomo (Single-File) para descarga directa
+  # 9. Publicar Reporte Autónomo (Single-File) para descarga directa
   - task: PublishPipelineArtifact@1
     condition: always()
     inputs:
