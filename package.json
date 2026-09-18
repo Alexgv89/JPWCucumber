@@ -20,6 +20,7 @@
     "test:browser": "npm run clear:results && npx allure run --config allurerc.js -- sh -c \"mvn test -Dbrowser=${BROWSER:-chrome} -Dheadless=${HEADLESS:-false} ; node calculate-quality-gate.js\" && npm run report:open",
     "test:browser:headless": "npm run clear:results && npx allure run --config allurerc.js -- sh -c \"mvn test -Dbrowser=${BROWSER:-chrome} -Dheadless=true ; node calculate-quality-gate.js\" && npm run report:open",
     "test:tag": "npm run clear:results && npx allure run --config allurerc.js -- sh -c \"mvn test -Dcucumber.filter.tags=${TAG} ; node calculate-quality-gate.js\" && npm run report:open",
+    "test:api": "npm run clear:results && npx allure run --config allurerc.js -- sh -c \"mvn test -Dcucumber.filter.tags='@api' ; node calculate-quality-gate.js\" && npm run report:open",
     "test:cross-browser": "npm run clear:results && npx allure run --config allurerc.js -- sh -c \"bash run-cross-browser.sh ; node calculate-quality-gate.js\" && npm run report:open",
     "test:cross-browser:headless": "npm run clear:results && npx allure run --config allurerc.js -- sh -c \"bash run-cross-browser-headless.sh ; node calculate-quality-gate.js\" && npm run report:open",
     "test:ci:browser": "npm run clear:results && npx allure run --config allurerc.js --output allure-report -- sh -c \"mvn test -Dheadless=true ; node calculate-quality-gate.js\" || true",

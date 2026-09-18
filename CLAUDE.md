@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Full Suite (with Allure Run & Quality Gates)**: `npm run test`
 - **Smoke Tests**: `npm run test:smoke`
 - **Regression Suite**: `npm run test:regression`
+- **API Tests (REST Assured)**: `npm run test:api`
 - **Specific Browser**: `BROWSER=firefox npm run test:browser` (Replace `firefox` with `chrome`, `safari`, `edge`)
 - **Specific Tag**: `TAG=@your_tag npm run test:tag`
 - **Cross-Browser Execution**: `npm run test:cross-browser`
@@ -23,12 +24,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Build & Maven
 - **Standard Test Run**: `mvn test`
+- **API Tests Only**: `mvn test -Dcucumber.filter.tags="@api"`
 
 ## High-Level Architecture
 
 ### Framework Stack
-- **Core**: JUnit 5 + Cucumber + Playwright (Java).
-- **Reporting**: Allure (with custom `allurerc.js` for Quality Gates and environment filtering).
+- **Core**: JUnit 5 + Cucumber + Playwright (Java) + REST Assured (API).
+- **Reporting**: Allure (with custom `allurerc.js` for Quality Gates and environment filtering, plus Allure-REST-Assured filter).
 - **Build Tool**: Maven.
 
 ### Key Components

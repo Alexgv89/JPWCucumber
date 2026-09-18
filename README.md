@@ -28,9 +28,10 @@ Todos los comandos utilizan el wrapper de Allure para garantizar la generación 
 | `npm run test:regression` | Suite de regresión completa. | Validación exhaustiva antes de despliegue. |
 | `npm run test:headless` | Ejecución invisible. | Mayor velocidad y menor consumo de recursos. |
 
-### 🛠️ Ejecuciones Dinámicas (Parámetros)
+### 🛠️ Ejecuciones Dinámicas (Parámetros y API)
 | Comando | Uso | Descripción |
 | :--- | :--- | :--- |
+| `npm run test:api` | `npm run test:api` | **Pruebas de API REST con REST Assured.** |
 | `npm run test:browser` | `BROWSER=firefox npm run test:browser` | Ejecuta en un navegador específico. |
 | `npm run test:browser:headless` | `BROWSER=safari npm run test:browser:headless` | Ejecuta en un navegador específico modo invisible. |
 | `npm run test:tag` | `TAG=@mi_tag npm run test:tag` | Ejecuta escenarios con el tag indicado. |

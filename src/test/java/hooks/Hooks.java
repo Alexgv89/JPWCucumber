@@ -44,11 +44,18 @@ public class Hooks {
 
     @Before
     public void setUp(Scenario scenario) {
-        Playwright playwright = Playwright.create();
-        PlaywrightManager.setPlaywright(playwright);
-
         // 1. Obtención y normalización del ambiente real de ejecución
         this.envName = System.getProperty("environment", properties.getProperty("Environment", "QA")).toUpperCase();
+
+        if (scenario.getSourceTagNames().contains("@api")) {
+            this.displayBrowserName = "API";
+            this.executorName = "RestAssured";
+            executedBrowsers.add("API");
+            return;
+        }
+
+        Playwright playwright = Playwright.create();
+        PlaywrightManager.setPlaywright(playwright);
 
         // RESOLUCIÓN DE URL DINÁMICA
         String urlKey = "url." + this.envName.toLowerCase();
@@ -172,7 +179,9 @@ public class Hooks {
             String scenarioName = scenario.getName().replaceAll("[^a-zA-Z0-9-_]", "_");
             scenario.attach(screenshot, "image/png", "screenshot-" + scenarioName);
         }
-        PlaywrightManager.cleanUp();
+        if (page != null) {
+            PlaywrightManager.cleanUp();
+        }
     }
 
     @AfterAll

@@ -115,6 +115,21 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- REST Assured para pruebas de API -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>5.5.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Allure REST Assured (Registra Request/Response automáticamente en Allure) -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- SLF4J Simple Logger (Implementación para limpiar consola) -->
         <dependency>
             <groupId>org.slf4j</groupId>
