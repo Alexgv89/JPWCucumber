@@ -1,0 +1,41 @@
+# Pipeline Manual para Resetear y Limpiar Historial de Allure en Azure DevOps
+name: Clear-Allure-History-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger: none # Solo ejecución manual desde Azure DevOps
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  # 1. Configurar Node.js 22
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '22.x'
+    displayName: 'Configurar Node.js 22'
+
+  # 2. Instalar dependencias
+  - script: npm install
+    displayName: 'Instalar Dependencias'
+
+  # 3. Limpiar carpetas locales y crear historial vacío
+  - script: |
+      npm run clear:results
+      npm run clear:history
+      mkdir -p allure-history
+    displayName: 'Limpiar Resultados y Resetear Historial'
+
+  # 4. Sobreescribir la caché con el historial vacío
+  - task: Cache@2
+    inputs:
+      key: 'allure-history | "$(Agent.OS)" | "$(Build.SourceBranch)"'
+      path: 'allure-history'
+    displayName: 'Sobreescribir Caché de Historial con Estado Vacío'
+
+  # 5. Publicar artefacto vacío de confirmación
+  - task: PublishPipelineArtifact@1
+    condition: always()
+    inputs:
+      targetPath: 'allure-history'
+      artifact: 'allure-history-reset'
+      publishLocation: 'pipeline'
+    displayName: 'Confirmar Historial Reseteado'
