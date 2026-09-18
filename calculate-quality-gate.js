@@ -165,12 +165,42 @@ try {
             buildUrl: buildUrl || undefined
         };
     } else {
+        // Smart local build counter: increments only when new test results are generated
+        const localBuildInfoFile = path.join(__dirname, 'allure-history', 'local-build.json');
+        let localBuildOrder = 1;
+        let previousBuildInfo = {};
+        if (fs.existsSync(localBuildInfoFile)) {
+            try {
+                previousBuildInfo = JSON.parse(fs.readFileSync(localBuildInfoFile, 'utf8'));
+                localBuildOrder = previousBuildInfo.lastBuildOrder || 1;
+            } catch (e) {}
+        }
+
+        const currentRunSignature = resultFiles.map(f => {
+            try {
+                const stats = fs.statSync(path.join(resultsDir, f));
+                return `${f}:${stats.mtimeMs}`;
+            } catch (e) {
+                return f;
+            }
+        }).sort().join('|');
+
+        if (previousBuildInfo.lastSignature && previousBuildInfo.lastSignature !== currentRunSignature && resultFiles.length > 0) {
+            localBuildOrder++;
+        }
+
+        fs.mkdirSync(path.dirname(localBuildInfoFile), { recursive: true });
+        fs.writeFileSync(localBuildInfoFile, JSON.stringify({
+            lastBuildOrder: localBuildOrder,
+            lastSignature: currentRunSignature
+        }, null, 2));
+
         const user = process.env.USER || process.env.USERNAME || 'alexgv89';
         executorData = {
             name: `Local Execution (${user})`,
             type: "local",
-            buildOrder: 1,
-            buildName: `Local Run (${new Date().toLocaleDateString()})`,
+            buildOrder: localBuildOrder,
+            buildName: `Local Run #${localBuildOrder}`,
             reportUrl: "http://localhost:8082"
         };
     }
