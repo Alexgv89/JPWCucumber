@@ -108,10 +108,9 @@ El pipeline de CI realiza las siguientes acciones:
 5. **Publicación**: Despliega el resultado final en **GitHub Pages**.
 
 ### 🔷 Compatibilidad con Azure DevOps Pipelines
-El repositorio incluye el archivo listo para usar [`azure-pipelines.yml`](file:///Users/alexgv/Documents/JPWCucumber/azure-pipelines.yml) con:
-- Selección interactiva de modo de ejecución (`single-browser` o `cross-browser`).
-- Publicación automática de métricas nativas en la pestaña **"Tests"** de Azure DevOps (`PublishTestResults@2`).
-- Publicación de los artefactos descargables de Allure (`allure-report` y el single-file `allure-report-single-html`).
+El repositorio incluye la carpeta dedicada [`.azure-pipelines/`](file:///Users/alexgv/Documents/JPWCucumber/.azure-pipelines) con:
+- [`allure-tests.yml`](file:///Users/alexgv/Documents/JPWCucumber/.azure-pipelines/allure-tests.yml): Pipeline principal con selección interactiva (`single-browser` / `cross-browser`), caché de historial (`Cache@2`), métricas JUnit (`PublishTestResults@2`) y artefactos Allure.
+- [`clear-history.yml`](file:///Users/alexgv/Documents/JPWCucumber/.azure-pipelines/clear-history.yml): Pipeline manual dedicado para resetear la caché del historial en Azure DevOps.
 
 ---
 
