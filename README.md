@@ -55,10 +55,26 @@ npm run report:open
 
 ### 2️⃣ Reporte Estático Autónomo en 1 Solo Archivo (`single-file`) 📎
 Ideal para **enviar por correo, Slack o Teams**. Genera un único archivo HTML autocontenido con todos los assets, estilos, imágenes y datos incrustados, que se puede abrir directamente con **doble clic** en cualquier navegador sin necesidad de servidor:
-```bash
-# Genera el archivo: allure-report-single/index.html
-npm run report:single
-```
+
+> 📌 **Naturaleza del Reporte (Snapshot Estático)**:
+> - Este reporte es una **fotografía exacta congelada** de la ejecución que acabas de realizar.
+> - Contiene los datos del ambiente (`Environment`) y navegadores (`Browsers.Used`) específicos de esa corrida.
+> - No cambia de ambiente interactivamente dentro del HTML; si requieres un reporte de otro ambiente (ej. `PROD`), ejecutas la suite en ese ambiente y luego generas el single-file.
+
+#### 🔄 Flujo de Uso:
+1. **Ejecutar las pruebas** (en el ambiente deseado):
+   ```bash
+   npm run test                      # Para QA (por defecto)
+   # o para otro ambiente:
+   ENVIRONMENT=PROD npm run test    # Para Producción
+   ```
+2. **Generar el reporte estático autónomo**:
+   ```bash
+   npm run report:single
+   ```
+3. **Compartir el archivo**:
+   - Encuentra el archivo generado en: `allure-report-single/index.html`.
+   - Ábrelo directamente con doble clic o compártelo como adjunto.
 
 ### 3️⃣ Reporte en Vivo en la Nube (GitHub Pages) 🌐
 El flujo de CI despliega automáticamente el reporte en vivo tras cada ejecución:
