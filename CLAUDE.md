@@ -14,9 +14,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Headless Execution**: `npm run test:headless` or `BROWSER=firefox npm run test:browser:headless`
 
 ### Report Management
-- **Generate Report**: `npm run report:generate`
-- **Open Report**: `npm run report:open`
+- **Generate Standard Report**: `npm run report:generate`
+- **Open Interactive Report**: `npm run report:open`
+- **Generate Static Single-File Report**: `npm run report:single`
 - **Clear Results**: `npm run clear:results`
+- **Clear History (Reset Trends)**: `npm run clear:history`
+- **Clear Everything**: `npm run clear:all`
 
 ### Build & Maven
 - **Standard Test Run**: `mvn test`

@@ -45,36 +45,58 @@ Todos los comandos utilizan el wrapper de Allure para garantizar la generación 
 
 ## 📊 Generación y Visualización de Reportes
 
-El framework ofrece múltiples opciones para visualizar y compartir los reportes generados:
+El framework ofrece soporte completo para **Tendencias (`Trends`)**, **Ejecutores (`Executors`)**, **Puertas de Calidad (`Quality Gates`)** y **Metadatos de Entorno**, tanto en reportes locales como en pipelines de CI/CD:
 
-### 1️⃣ Reporte Local Interactivo (Servidor Web)
+### 1️⃣ Reporte Local Interactivo (Servidor Web Allure)
+Genera y abre el servidor interactivo en el puerto `8082`:
 ```bash
-# Generar y abrir el reporte estándar de Allure en el puerto 8082
+# Generar y abrir directamente:
+npm run test           # Ejecuta pruebas y abre el reporte automáticamente
+# O generar y abrir manualmente:
+npm run report:generate
 npm run report:open
 ```
 
 ### 2️⃣ Reporte Estático Autónomo en 1 Solo Archivo (`single-file`) 📎
-Ideal para **enviar por correo, Slack o Teams**. Genera un único archivo HTML autocontenido con todos los assets, estilos, imágenes y datos incrustados, que se puede abrir directamente con **doble clic** en cualquier navegador sin necesidad de servidor:
+Genera un único archivo HTML autocontenido (`allure-report-single/index.html`) con todos los datos, estilos y gráficos incrustados. Es ideal para **enviar por correo, Slack o Teams** y se puede abrir con **doble clic** en cualquier navegador sin levantar ningún servidor.
 
-> 📌 **Naturaleza del Reporte (Snapshot Estático)**:
-> - Este reporte es una **fotografía exacta congelada** de la ejecución que acabas de realizar.
-> - Contiene los datos del ambiente (`Environment`) y navegadores (`Browsers.Used`) específicos de esa corrida.
-> - No cambia de ambiente interactivamente dentro del HTML; si requieres un reporte de otro ambiente (ej. `PROD`), ejecutas la suite en ese ambiente y luego generas el single-file.
+```bash
+# 1. Ejecutar las pruebas:
+mvn test
+# (o npm run test:smoke / npm run test:regression / npm run test:headless)
 
-#### 🔄 Flujo de Uso:
-1. **Ejecutar las pruebas** (en el ambiente deseado):
-   ```bash
-   npm run test                      # Para QA (por defecto)
-   # o para otro ambiente:
-   ENVIRONMENT=PROD npm run test    # Para Producción
-   ```
-2. **Generar el reporte estático autónomo**:
-   ```bash
-   npm run report:single
-   ```
-3. **Compartir el archivo**:
-   - Encuentra el archivo generado en: `allure-report-single/index.html`.
-   - Ábrelo directamente con doble clic o compártelo como adjunto.
+# 2. Generar el archivo único HTML:
+npm run report:single
+
+# 3. Abrir el archivo:
+open allure-report-single/index.html
+```
+
+---
+
+### 📈 Gestión de Historial (Trends) y Ejecutores (Executors)
+
+Ambos tipos de reportes están conectados al sistema automático de historial y detección de ejecutores:
+
+#### 🔹 Widget "Executors":
+Detecta el contexto de ejecución e inyecta la metadata adecuada:
+- **Local:** Identifica el usuario del sistema operativo y hora local.
+- **GitHub Actions:** Enlaza el repositorio, número de workflow run (`GITHUB_RUN_NUMBER`), nombre de rama y URL del reporte en Pages.
+- **Azure DevOps:** Enlaza la organización, proyecto, ID de build (`BUILD_BUILDID`), rama y link directo a la ejecución del pipeline.
+
+#### 🔹 Widget "Trends" e "History":
+- Acumula los resultados entre ejecuciones consecutivas para mostrar gráficos de evolución en el dashboard y el histórico detallado por cada caso de prueba.
+- Cuenta con **deduplicación inteligente**: volver a generar el reporte estático sobre la misma corrida no duplicará barras ni entradas en el historial.
+
+#### 🧹 Comandos de Limpieza:
+| Comando | ¿Qué limpia? | ¿Cuándo usarlo? |
+| :--- | :--- | :--- |
+| `npm run clear:results` | Resultados de la última corrida en `target/allure-results/`. | Antes de una corrida nueva (se ejecuta automáticamente en los scripts). |
+| `npm run clear:history` | Historial acumulado en `allure-history/`. | **Para resetear tendencias y empezar desde `Run #1` en ambos reportes.** |
+| `npm run clear:evidences` | Capturas de pantalla y videos generados. | Para liberar espacio en disco. |
+| `npm run clear:all` | Todos los resultados, reportes, historial y evidencias. | Limpieza total desde cero. |
+
+---
 
 ### 3️⃣ Reporte en Vivo en la Nube (GitHub Pages) 🌐
 El flujo de CI despliega automáticamente el reporte en vivo tras cada ejecución:
