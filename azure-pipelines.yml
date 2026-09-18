@@ -1,0 +1,86 @@
+# Pipeline de Integración Continua para Azure DevOps (Playwright + Cucumber + Allure)
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+
+parameters:
+  - name: execution_mode
+    displayName: 'Modo de ejecución'
+    type: string
+    default: 'single-browser'
+    values:
+      - single-browser
+      - cross-browser
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  # 1. Configurar JDK 25
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '25'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+    displayName: 'Configurar JDK 25'
+
+  # 2. Configurar Node.js 22
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '22.x'
+    displayName: 'Configurar Node.js 22'
+
+  # 3. Instalar dependencias del proyecto y navegadores de Playwright
+  - script: |
+      npm install
+      npx playwright install --with-deps
+    displayName: 'Instalar Dependencias y Navegadores Playwright'
+
+  # 4. Ejecutar Suite de Pruebas según el modo seleccionado
+  - script: |
+      if [ "${{ parameters.execution_mode }}" = "cross-browser" ]; then
+        echo "Ejecutando suite Cross-Browser..."
+        npm run test:ci:cross
+      else
+        echo "Ejecutando suite Single-Browser (Chrome)..."
+        npm run test:ci:browser
+      fi
+    displayName: 'Ejecutar Pruebas Automatizadas'
+    continueOnError: true
+
+  # 5. Generar Reporte Estático Autónomo (Single-File)
+  - script: |
+      npm run report:single
+    displayName: 'Generar Reporte Estático Allure Single-File'
+    condition: always()
+
+  # 6. Publicar Resultados JUnit nativos en la pestaña "Tests" de Azure DevOps
+  - task: PublishTestResults@2
+    condition: always()
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      failTaskOnFailedTests: false
+      testRunTitle: 'Resultados de Pruebas Automatizadas - Wikipedia Suite'
+    displayName: 'Publicar Métricas de Pruebas en Azure DevOps'
+
+  # 7. Publicar Reporte Allure Estándar como Artefacto
+  - task: PublishPipelineArtifact@1
+    condition: always()
+    inputs:
+      targetPath: 'allure-report'
+      artifact: 'allure-report'
+      publishLocation: 'pipeline'
+    displayName: 'Publicar Artefacto Allure Report'
+
+  # 8. Publicar Reporte Autónomo (Single-File) para descarga directa
+  - task: PublishPipelineArtifact@1
+    condition: always()
+    inputs:
+      targetPath: 'allure-report-single'
+      artifact: 'allure-report-single-html'
+      publishLocation: 'pipeline'
+    displayName: 'Publicar Artefacto Single-File HTML'

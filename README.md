@@ -107,6 +107,12 @@ El pipeline de CI realiza las siguientes acciones:
 4. **Historial Persistente**: Utiliza `actions/cache` para acumular el historial (`allure-history/history.jsonl`) entre ejecuciones.
 5. **Publicación**: Despliega el resultado final en **GitHub Pages**.
 
+### 🔷 Compatibilidad con Azure DevOps Pipelines
+El repositorio incluye el archivo listo para usar [`azure-pipelines.yml`](file:///Users/alexgv/Documents/JPWCucumber/azure-pipelines.yml) con:
+- Selección interactiva de modo de ejecución (`single-browser` o `cross-browser`).
+- Publicación automática de métricas nativas en la pestaña **"Tests"** de Azure DevOps (`PublishTestResults@2`).
+- Publicación de los artefactos descargables de Allure (`allure-report` y el single-file `allure-report-single-html`).
+
 ---
 
 ## 📊 Metadatos del Reporte
