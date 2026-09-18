@@ -4,34 +4,25 @@ import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
 import io.cucumber.java.es.Y;
-import io.qameta.allure.restassured.AllureRestAssured;
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.Assertions;
+import services.WikipediaApiService;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalToIgnoringCase;
 
 public class WikiApiSteps {
 
-    private String baseUri;
-    private RequestSpecification request;
+    private final WikipediaApiService apiService = new WikipediaApiService();
     private Response response;
 
     @Dado("que la API REST de Wikipedia está disponible en {string}")
     public void queLaApiRestDeWikipediaEstaDisponibleEn(String uri) {
-        this.baseUri = uri;
-        this.request = given()
-                .filter(new AllureRestAssured()) // Adjunta Request/Response automáticamente en Allure
-                .baseUri(this.baseUri)
-                .header("User-Agent", "WikipediaAutomationSuite/1.0 (test@example.com)")
-                .contentType(ContentType.JSON);
+        this.apiService.setBaseUri(uri);
     }
 
     @Cuando("realizo una petición GET al endpoint de resumen {string}")
     public void realizoUnaPeticionGetAlEndpointDeResumen(String endpoint) {
-        this.response = this.request.when().get(endpoint);
+        this.response = this.apiService.getArticleSummary(endpoint);
     }
 
     @Entonces("la respuesta debe tener el código de estado HTTP {int}")

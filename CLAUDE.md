@@ -47,6 +47,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Project Structure
 - `src/test/java/hooks`: Test lifecycle and metadata.
 - `src/test/java/manager`: Resource isolation and Playwright management.
+- `src/test/java/pages`: UI Page Objects (Playwright).
+- `src/test/java/services`: API Client / Service Objects (REST Assured).
 - `src/test/java/stepdefinitions`: Cucumber step implementations.
 - `src/test/resources/features`: Gherkin feature files.
 - `src/test/resources/config.properties`: Global environment configuration.
