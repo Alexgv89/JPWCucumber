@@ -11,7 +11,7 @@ El framework ha sido diseñado bajo principios de **Clean Architecture**, separa
 ### 🔹 Pilares de Diseño:
 - **Paralelismo Seguro**: Implementado mediante `ThreadLocal` en el `PlaywrightManager`, asegurando que cada hilo de ejecución tenga su propia instancia de navegador, contexto y página, eliminando cualquier fuga de estado (*state leakage*).
 - **Unicidad en Allure**: Modificación programática del `testCaseId` en los Hooks, permitiendo que un mismo escenario ejecutado en diferentes navegadores se registre como una entrada única, evitando que Allure los interprete como "reintentos".
-- **Consolidación de Metadata (The Fragment Strategy)**: Para evitar que los navegadores sobreescriban el archivo `environment.properties` en ejecuciones paralelas o cross-browser, cada proceso escribe un fragmento (`env-chrome.properties`). Un script de consolidación final (`calculate-//quality-gate.js`) une estos fragmentos en un único archivo maestro.
+- **Consolidación de Metadata (The Fragment Strategy)**: Para evitar que los navegadores sobreescriban el archivo `environment.properties` en ejecuciones paralelas o cross-browser, cada proceso escribe un fragmento (`env-chrome.properties`). Un script de consolidación final (`calculate-quality-gate.js`) une estos fragmentos en un único archivo maestro.
 - **Puertas de Calidad (Quality Gates)**: Implementación de reglas estrictas (Tasa de éxito 100%, 0 fallos) que se calculan dinámicamente y se visualizan en el Home del reporte, permitiendo una decisión rápida de "Go/No-Go".
 
 ---
@@ -43,27 +43,59 @@ Todos los comandos utilizan el wrapper de Allure para garantizar la generación 
 
 ---
 
+## 📊 Generación y Visualización de Reportes
+
+El framework ofrece múltiples opciones para visualizar y compartir los reportes generados:
+
+### 1️⃣ Reporte Local Interactivo (Servidor Web)
+```bash
+# Generar y abrir el reporte estándar de Allure en el puerto 8082
+npm run report:open
+```
+
+### 2️⃣ Reporte Estático Autónomo en 1 Solo Archivo (`single-file`) 📎
+Ideal para **enviar por correo, Slack o Teams**. Genera un único archivo HTML autocontenido con todos los assets, estilos, imágenes y datos incrustados, que se puede abrir directamente con **doble clic** en cualquier navegador sin necesidad de servidor:
+```bash
+# Genera el archivo: allure-report-single/index.html
+npm run report:single
+```
+
+### 3️⃣ Reporte en Vivo en la Nube (GitHub Pages) 🌐
+El flujo de CI despliega automáticamente el reporte en vivo tras cada ejecución:
+👉 **URL Pública**: `https://alexgv89.github.io/JPWCucumber/`
+
+### 4️⃣ Consulta de Ejecuciones Anteriores (Histórico y Artefactos) 🗄️
+- **Desde la Web**: En el reporte de GitHub Pages, consulta la sección **History / Trends** para ver la evolución y reintentos de cada prueba.
+- **Desde GitHub Actions**: En la pestaña **Actions**, selecciona cualquier ejecución pasada y descarga el artefacto **`github-pages`** (ZIP). Para visualizarlo localmente:
+  ```bash
+  # Descomprimir y servir:
+  npx allure open ruta/a/la/carpeta/descomprimida
+  ```
+
+---
+
 ## ☁️ Integración Continua (CI/CD)
 
 El proyecto está totalmente preparado para ejecutarse en servidores de CI (como GitHub Actions) mediante comandos optimizados que generan artefactos estáticos.
 
 ### 📦 Comandos de CI
-- `npm run test:ci:cross`: Ejecuta la suite cross-browser en modo headless y genera la carpeta de reporte final.
-- `npm run test:ci:browser`: Ejecuta un navegador específico en CI y genera el reporte.
+- `npm run test:ci:cross`: Ejecuta la suite cross-browser en modo headless con `allure run`, consolidando metadatos y Quality Gates.
+- `npm run test:ci:browser`: Ejecuta un navegador específico en CI con `allure run`.
+- `npm run report:generate:ci`: Garantiza la disponibilidad del reporte para el despliegue en Pages.
 
 ### 🚀 Flujo de Despliegue en GitHub Pages
 El pipeline de CI realiza las siguientes acciones:
-1. **Aislamiento**: Ejecuta los tests en un contenedor Linux limpio.
-2. **Consolidación**: Ejecuta `calculate-quality-gate.js` para unificar la metadata de todos los navegadores.
+1. **Aislamiento**: Ejecuta los tests en un contenedor Linux limpio con **Java 25** y **Node.js 22**.
+2. **Consolidación**: Ejecuta `calculate-quality-gate.js` para unificar la metadata de todos los navegadores (`Browsers.Used`).
 3. **Landing Page**: Crea un portal de entrada profesional (`index.html`) para acceder fácilmente al reporte de Allure.
-4. **Historial**: Utiliza el sistema de caché de GitHub para mantener la gráfica de tendencias (`history.jsonl`) entre ejecuciones.
-5. **Publicación**: Despliega el resultado final en **GitHub Pages**, permitiendo que cualquier stakeholder vea el reporte en vivo.
+4. **Historial Persistente**: Utiliza `actions/cache` para acumular el historial (`allure-history/history.jsonl`) entre ejecuciones.
+5. **Publicación**: Despliega el resultado final en **GitHub Pages**.
 
 ---
 
 ## 📊 Metadatos del Reporte
 El reporte generado incluye automáticamente la siguiente información consolidada en el Home:
-- **Browsers.Used**: Listado de todos los navegadores que participaron en la ejecución.
+- **Browsers.Used**: Listado de todos los navegadores que participaron en la ejecución (ej: `CHROME, FIREFOX, SAFARI`).
 - **Environment**: Ambiente ejecutado (QA, Prod, etc.) resuelto dinámicamente desde `config.properties`.
 - **Base URL**: URL del sistema bajo prueba.
 - **OS / Java**: Información del sistema operativo y versión de Java del servidor de ejecución.
